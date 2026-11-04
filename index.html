@@ -1,1 +1,322 @@
 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sugar Paradise ♡</title>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 25px;
+      font-family: Verdana, sans-serif;
+      color: #9b3971;
+      background: repeating-linear-gradient(
+        45deg, #ffe6f2, #ffe6f2 15px, #ffd6e9 15px, #ffd6e9 30px
+      );
+    }
+
+    .container {
+      max-width: 650px;
+      margin: 35px auto;
+      padding: 25px;
+      background: #fff8fc;
+      border: 4px double #f18cbd;
+      border-radius: 18px;
+      box-shadow: 0 5px 18px #d77aa855;
+      text-align: center;
+    }
+
+    h1 {
+      color: #ed69a8;
+      font-family: Georgia, serif;
+      font-size: 38px;
+      text-shadow: 2px 2px #ffd1e6;
+    }
+
+    h2 { color: #df6ca5; }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 12px;
+      margin: 7px 0;
+      border: 2px solid #f4b1d1;
+      border-radius: 9px;
+      background: white;
+      color: #8e4770;
+      font: inherit;
+    }
+
+    textarea { min-height: 85px; resize: vertical; }
+
+    button {
+      padding: 11px 17px;
+      margin: 6px 3px;
+      border: 0;
+      border-radius: 20px;
+      background: #f18cbd;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover { background: #df65a2; }
+
+    .secondary { background: #c58bb5; }
+
+    .panel {
+      margin-top: 20px;
+      padding: 18px;
+      background: #fff0f7;
+      border: 2px dashed #ed9bc4;
+      border-radius: 14px;
+    }
+
+    .hidden { display: none; }
+
+    #message {
+      min-height: 24px;
+      color: #a23d75;
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    #profile {
+      padding: 20px;
+      border: 3px dotted #ed9bc4;
+      border-radius: 14px;
+      margin-top: 15px;
+    }
+
+    #profileName { font-family: Georgia, serif; }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <h1>♡ Sugar Paradise ♡</h1>
+    <p>Un rinconcito dulce para decorar y compartir ✧</p>
+
+    <section id="authPanel" class="panel">
+      <h2>Entrá a tu mundo ♡</h2>
+      <input id="email" type="email" placeholder="Tu correo electrónico">
+      <input id="password" type="password" placeholder="Tu contraseña">
+      <input id="newUsername" type="text" placeholder="Nombre de usuario (para registrarte)">
+
+      <button id="registerBtn">Crear cuenta</button>
+      <button id="loginBtn">Iniciar sesión</button>
+      <button id="googleBtn" class="secondary">Entrar con Google</button>
+    </section>
+
+    <section id="profilePanel" class="hidden">
+      <div class="panel">
+        <h2>¡Hola, Sugar! 🍓</h2>
+        <p>Personalizá tu perfil</p>
+
+        <input id="username" type="text" placeholder="Tu nombre de usuario">
+        <textarea id="bio" placeholder="Escribí algo sobre vos..."></textarea>
+
+        <label for="background">Elegí tu fondo:</label>
+        <select id="background">
+          <option value="#fff0f7">Rosa pastel</option>
+          <option value="#fce4ff">Lila dulce</option>
+          <option value="#e4f7ff">Celeste cielo</option>
+          <option value="#e5ffe9">Verde menta</option>
+          <option value="#fff3d9">Durazno</option>
+        </select>
+
+        <label for="font">Elegí tu estilo de letra:</label>
+        <select id="font">
+          <option value="Georgia, serif">Retro</option>
+          <option value="Verdana, sans-serif">Clásica</option>
+          <option value="cursive">Manuscrita</option>
+          <option value="monospace">Pixel</option>
+        </select>
+
+        <button id="saveBtn">Guardar mi perfil ♡</button>
+        <button id="logoutBtn" class="secondary">Cerrar sesión</button>
+      </div>
+
+      <div id="profile">
+        <h2 id="profileName">Mi perfil</h2>
+        <p id="profileBio">¡Bienvenido a Sugar Paradise!</p>
+        <p>♡ Sugar Paradise member ♡</p>
+      </div>
+    </section>
+
+    <p id="message"></p>
+    <p>✧･ﾟ: *✧･ﾟ:* ♡ *:･ﾟ✧*:･ﾟ✧</p>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from
+      "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+
+    import {
+      getAuth,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      GoogleAuthProvider,
+      signInWithPopup,
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc
+    } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyChZSoHtiBo9LA_rp-YDZyPkgkSkqy6f9Q",
+      authDomain: "social-chat-e7fa6.firebaseapp.com",
+      projectId: "social-chat-e7fa6",
+      storageBucket: "social-chat-e7fa6.firebasestorage.app",
+      messagingSenderId: "602842026330",
+      appId: "1:602842026330:web:06d6c0af866e0ef00aa363",
+      measurementId: "G-285VN9HRLT"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const googleProvider = new GoogleAuthProvider();
+
+    const $ = (id) => document.getElementById(id);
+    const message = $("message");
+
+    function showMessage(text) {
+      message.textContent = text;
+    }
+
+    async function createProfile(user, username) {
+      const profileRef = doc(db, "perfiles", user.uid);
+      const existing = await getDoc(profileRef);
+
+      if (!existing.exists()) {
+        await setDoc(profileRef, {
+          username: username || "Sugar member",
+          bio: "¡Bienvenido a Sugar Paradise!",
+          fondo: "#fff0f7",
+          fuente: "Georgia, serif"
+        });
+      }
+    }
+
+    $("registerBtn").addEventListener("click", async () => {
+      const email = $("email").value.trim();
+      const password = $("password").value;
+      const username = $("newUsername").value.trim();
+
+      if (!email || !password || !username) {
+        showMessage("Completá correo, contraseña y nombre de usuario ♡");
+        return;
+      }
+
+      try {
+        const result = await createUserWithEmailAndPassword(auth, email, password);
+        await createProfile(result.user, username);
+        showMessage("¡Tu cuenta fue creada! ♡");
+      } catch (error) {
+        showMessage("No se pudo crear la cuenta: " + error.message);
+      }
+    });
+
+    $("loginBtn").addEventListener("click", async () => {
+      try {
+        await signInWithEmailAndPassword(
+          auth,
+          $("email").value.trim(),
+          $("password").value
+        );
+        showMessage("¡Bienvenido de nuevo! ♡");
+      } catch (error) {
+        showMessage("No se pudo iniciar sesión: " + error.message);
+      }
+    });
+
+    $("googleBtn").addEventListener("click", async () => {
+      try {
+        const result = await signInWithPopup(auth, googleProvider);
+        await createProfile(result.user, result.user.displayName || "Sugar member");
+        showMessage("¡Entraste con Google! ♡");
+      } catch (error) {
+        showMessage("No se pudo entrar con Google: " + error.message);
+      }
+    });
+
+    async function loadProfile(user) {
+      const profileRef = doc(db, "perfiles", user.uid);
+      const snapshot = await getDoc(profileRef);
+
+      if (!snapshot.exists()) {
+        await createProfile(user, user.displayName || "Sugar member");
+      }
+
+      const data = (await getDoc(profileRef)).data();
+
+      $("username").value = data.username || "";
+      $("bio").value = data.bio || "";
+      $("background").value = data.fondo || "#fff0f7";
+      $("font").value = data.fuente || "Georgia, serif";
+
+      updatePreview();
+    }
+
+    function updatePreview() {
+      $("profileName").textContent = $("username").value || "Mi perfil";
+      $("profileBio").textContent = $("bio").value || "¡Hola! ♡";
+      $("profile").style.background = $("background").value;
+      $("profile").style.fontFamily = $("font").value;
+    }
+
+    $("username").addEventListener("input", updatePreview);
+    $("bio").addEventListener("input", updatePreview);
+    $("background").addEventListener("change", updatePreview);
+    $("font").addEventListener("change", updatePreview);
+
+    $("saveBtn").addEventListener("click", async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      try {
+        await setDoc(doc(db, "perfiles", user.uid), {
+          username: $("username").value.trim(),
+          bio: $("bio").value.trim(),
+          fondo: $("background").value,
+          fuente: $("font").value
+        }, { merge: true });
+
+        updatePreview();
+        showMessage("¡Tu perfil quedó guardado! ♡");
+      } catch (error) {
+        showMessage("No se pudo guardar: " + error.message);
+      }
+    });
+
+    $("logoutBtn").addEventListener("click", () => signOut(auth));
+
+    onAuthStateChanged(auth, async (user) => {
+      $("authPanel").classList.toggle("hidden", !!user);
+      $("profilePanel").classList.toggle("hidden", !user);
+
+      if (user) {
+        try {
+          await loadProfile(user);
+          showMessage("¡Sesión iniciada! ♡");
+        } catch (error) {
+          showMessage("No se pudo cargar el perfil: " + error.message);
+        }
+      } else {
+        showMessage("¡Te esperamos en Sugar Paradise! ♡");
+      }
+    });
+  </script>
+</body>
+</html>
+
