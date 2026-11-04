@@ -2,35 +2,238 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sugar Paradise ♡</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sugar Paradise ♡</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Verdana, sans-serif;
+  background: #ffe5f1;
+  color: #874c70;
+}
+header {
+  text-align: center;
+  padding: 28px 12px;
+  background: #ffb9d8;
+  border-bottom: 4px dotted white;
+}
+h1 { font-size: 38px; margin: 0; }
+main {
+  max-width: 650px;
+  margin: 25px auto;
+  padding: 20px;
+}
+.panel {
+  background: white;
+  border: 2px solid #f5a6cb;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 12px #e7a8c655;
+}
+input, textarea, select, button {
+  width: 100%;
+  padding: 11px;
+  margin: 7px 0;
+  border: 1px solid #e8a2c4;
+  border-radius: 9px;
+  font: inherit;
+}
+button {
+  background: #ffacd0;
+  color: #713c5c;
+  border: 0;
+  font-weight: bold;
+  cursor: pointer;
+}
+button:hover { background: #ff8fbe; }
+#profile {
+  min-height: 180px;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  background: #ffe5f1;
+  overflow-wrap: anywhere;
+}
+.hidden { display: none; }
+#status { text-align: center; }
+</style>
+</head>
+<body>
 
-  <style>
-    * { box-sizing: border-box; }
+<header>
+  <h1>♡ Sugar Paradise ♡</h1>
+  <p>your little pink internet world ✧</p>
+</header>
 
-    body {
-      margin: 0;
-      padding: 25px;
-      font-family: Verdana, sans-serif;
-      color: #9b3971;
-      background: repeating-linear-gradient(
-        45deg, #ffe6f2, #ffe6f2 15px, #ffd6e9 15px, #ffd6e9 30px
-      );
+<main>
+  <section class="panel" id="authPanel">
+    <h2>Bienvenida ♡</h2>
+    <input id="email" type="email" placeholder="Correo electrónico">
+    <input id="password" type="password" placeholder="Contraseña">
+    <button id="register">Crear cuenta</button>
+    <button id="login">Iniciar sesión</button>
+    <button id="google">Entrar con Google</button>
+    <p id="status"></p>
+  </section>
+
+  <section class="panel hidden" id="profilePanel">
+    <h2>Mi perfil ✧</h2>
+    <div id="profile">
+      <h2 id="showName">Mi perfil</h2>
+      <p id="showBio">¡Bienvenida a Sugar Paradise!</p>
+    </div>
+
+    <h3>Personalizá tu perfil</h3>
+    <input id="username" placeholder="Nombre de usuario">
+    <textarea id="bio" placeholder="Escribí tu biografía"></textarea>
+
+    <label>Color de fondo</label>
+    <input id="background" type="color" value="#ffe5f1">
+
+    <label>Tipografía</label>
+    <select id="font">
+      <option value="Verdana">Verdana</option>
+      <option value="Georgia">Georgia</option>
+      <option value="Arial">Arial</option>
+      <option value="Courier New">Courier New</option>
+    </select>
+
+    <button id="save">Guardar cambios ♡</button>
+    <button id="logout">Cerrar sesión</button>
+    <p id="profileStatus"></p>
+  </section>
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+import {
+  getAuth, createUserWithEmailAndPassword,
+  signInWithEmailAndPassword, GoogleAuthProvider,
+  signInWithPopup, onAuthStateChanged, signOut
+} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+import {
+  getDatabase, ref, get, set
+} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyChZSoHtiBo9LA_rp-YDZyPkgkSkqy6f9Q",
+  authDomain: "social-chat-e7fa6.firebaseapp.com",
+  databaseURL: "https://social-chat-e7fa6-default-rtdb.firebaseio.com",
+  projectId: "social-chat-e7fa6",
+  storageBucket: "social-chat-e7fa6.firebasestorage.app",
+  messagingSenderId: "602842026330",
+  appId: "1:602842026330:web:06d6c0af866e0ef00aa363"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+const provider = new GoogleAuthProvider();
+
+const $ = id => document.getElementById(id);
+
+$("register").onclick = async () => {
+  try {
+    await createUserWithEmailAndPassword(
+      auth, $("email").value, $("password").value
+    );
+    $("status").textContent = "¡Cuenta creada! ♡";
+  } catch (e) {
+    $("status").textContent = e.message;
+  }
+};
+
+$("login").onclick = async () => {
+  try {
+    await signInWithEmailAndPassword(
+      auth, $("email").value, $("password").value
+    );
+  } catch (e) {
+    $("status").textContent = e.message;
+  }
+};
+
+$("google").onclick = async () => {
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (e) {
+    $("status").textContent = e.message;
+  }
+};
+
+async function loadProfile(user) {
+  const profileRef = ref(db, "perfiles/" + user.uid);
+  const snapshot = await get(profileRef);
+
+  let data = snapshot.val();
+
+  if (!data) {
+    data = {
+      username: user.displayName || "Sugar User",
+      bio: "¡Bienvenida a Sugar Paradise! ♡",
+      background: "#ffe5f1",
+      font: "Verdana"
+    };
+    await set(profileRef, data);
+  }
+
+  $("username").value = data.username || "";
+  $("bio").value = data.bio || "";
+  $("background").value = data.background || "#ffe5f1";
+  $("font").value = data.font || "Verdana";
+  updatePreview();
+}
+
+function updatePreview() {
+  $("showName").textContent = $("username").value;
+  $("showBio").textContent = $("bio").value;
+  $("profile").style.background = $("background").value;
+  $("profile").style.fontFamily = $("font").value;
+}
+
+$("username").oninput = updatePreview;
+$("bio").oninput = updatePreview;
+$("background").oninput = updatePreview;
+$("font").onchange = updatePreview;
+
+$("save").onclick = async () => {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  try {
+    await set(ref(db, "perfiles/" + user.uid), {
+      username: $("username").value,
+      bio: $("bio").value,
+      background: $("background").value,
+      font: $("font").value
+    });
+    $("profileStatus").textContent = "¡Perfil guardado! ♡";
+  } catch (e) {
+    $("profileStatus").textContent = e.message;
+  }
+};
+
+$("logout").onclick = () => signOut(auth);
+
+onAuthStateChanged(auth, async user => {
+  $("authPanel").classList.toggle("hidden", !!user);
+  $("profilePanel").classList.toggle("hidden", !user);
+
+  if (user) {
+    try {
+      await loadProfile(user);
+    } catch (e) {
+      $("profileStatus").textContent = e.message;
     }
+  }
+});
+</script>
+</body>
+</html>
 
-    .container {
-      max-width: 650px;
-      margin: 35px auto;
-      padding: 25px;
-      background: #fff8fc;
-      border: 4px double #f18cbd;
-      border-radius: 18px;
-      box-shadow: 0 5px 18px #d77aa855;
-      text-align: center;
-    }
-
-    h1 {
       color: #ed69a8;
       font-family: Georgia, serif;
       font-size: 38px;
